@@ -1,43 +1,135 @@
-// const express = require("express")
-// const app = express();
+// let fs = require('fs');
+// let input = fs.readFileSync('/dev/stdin').toString().split('\n');
+// let input = fs.readFileSync('/dev/stdin').toString().split(' ');
+// let input = parseInt(fs.readFileSync('/dev/stdin').toString().trim());
 
-import express from "express"
+// const readline = require("readline");
+// const rl = readline.createInterface({
+//   input: process.stdin,
+//   output: process.stdout
+// });
 
-const PORT = 4000;
-const app = express();
+// let input = [];
 
-const logger = (req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    next();
-}
-const privateMiddleware = (req, res, next) => {
-    const url  = req.url;
-    if(url === "/protected") {
-        return res.send("<h1>Not Allowed</h1>")
+// rl.on("line", function (line) {
+//   input.push(parseInt(line));
+// }).on("close", function () {
+
+//   process.exit();
+// });
+
+
+/*
+
+*/
+
+// let fs = require('fs')
+// let input = fs.readFileSync('/dev/stdin').toString().split(' ')
+
+// const arr = [];
+// input.map((word)=>arr.push(parseInt(word)));
+
+// let result = [0,0]
+
+// for (const num in arr) {
+//     let index = 0
+//     let count = 0
+//     for(let i=0; i<arr.length; i++) {
+//         if (arr[num] === arr[i]){
+//             count += 1;
+//             index = i
+//         }
+//     }
+//     if (result[1] <= count && count !== 1) {
+//         result[0] = index;
+//         result[1] = count
+//     }
+// }
+// const finalIndex = result[0];
+// const finalNum = result[1];
+
+// if (finalNum === 3) {
+//     console.log(10000+arr[finalIndex]*1000)
+// } else if (finalNum === 2) {
+//     console.log(1000+arr[finalIndex]*100)
+// } else {
+//     console.log(Math.max(...arr)*100)
+// }
+
+
+
+const fs = require("fs");
+const arr = fs
+    .readFileSync("/dev/stdin")
+    .toString()
+    .trim()
+    .split(" ")
+    .map((str) => +str);
+// 더하기 연산자를 사용하면 문자타입의 숫자를 숫자타입으로 변경할 수 있다.
+
+const calculateMoney = (arr) => {
+    const kindsOfDice = arr.filter((num) => num > 0).length;
+    if (kindsOfDice < 3) {
+        const max = Math.max(...arr);
+        const index = arr.indexOf(max);
+        if (kindsOfDice === 2) return 1000 + index * 100;
+        if (kindsOfDice === 1) return 10000 + index * 1000;
+    } else {
+        return Math.max(
+            ...arr.map((num, index) => (num > 0 ? index * 100 : 0))
+        );
     }
-    console.log( "Allowed, you may continue")
-    next();
-}
-
-// route 에는 request와 response가 있다
-const handleHome = (req, res) => {
-    // return res.send("<h1>I still love you</h1>");
-    return res.send("I love middleware");
 };
-const handleLogin = (req, res) => {
-    return res.send("login here")
+
+
+const diceCounts = [0, 0, 0, 0, 0, 0, 0];
+
+for (let diceNum = 1; diceNum <= 6; diceNum++) {
+    for (let num of arr) {
+        diceNum === num && diceCounts[diceNum]++;
+    }
 }
-const handleProtected = (req, res) => {
-    return res.send("<h1>Welcome to the private lounge</h1>");
-}
 
-app.use(logger);
-app.use(privateMiddleware)
+console.log(calculateMoney(diceCounts));
 
-app.get("/", handleHome);
-app.get("/login", handleLogin)
-app.get("/protected", handleProtected)
 
-const handleListening = ()=>console.log(`Server is listening on port http://localhost:${PORT}`);
 
-app.listen(PORT, handleListening);
+
+// const arr = [12, 12, 12, 11];
+
+
+
+// const getMode = (arr) => {
+//   let mostFrequentCnt = 1;
+//   const mode = [];
+//   const _map = new Map();
+
+//   for (const item of arr) {
+//     const hasValue = _map.get(item);
+//     const cnt = hasValue === undefined ? 1: hasValue + 1;
+//     _map.set(item, cnt);
+//   }
+//   console.log(_map)
+
+//   for (const [key, value] of _map) {
+//     if (value > mostFrequentCnt) {
+//       mostFrequentCnt = value;
+//     }
+//   }
+
+//   if (mostFrequentCnt === 1) return null;
+//   for (const [key, value] of _map) {
+//     if (value === mostFrequentCnt) {
+//       mode.push(key);
+//     }
+//   }
+//   if (mostFrequentCnt === arr.length) return null;
+//   return mode;
+// };
+
+
+// if (getMode(arr)) {
+//   console.log('최빈값:', getMode(arr).join(','));
+// } else {
+//   console.log('없다');
+// }
