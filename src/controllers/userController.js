@@ -116,7 +116,7 @@ export const finishGithubLogin = async (req, res) => {
                 Authorization: `token ${access_token}`
             }
         })).json(); 
-        // console.log(userData);
+        console.log(userData);
         const emailData = await (await fetch(`${apiUrl}/user/emails` ,{
             headers:{
                 Authorization: `token ${access_token}`
@@ -137,15 +137,15 @@ export const finishGithubLogin = async (req, res) => {
         } else {
             const user = await User.create({
                 name:userData.name, 
-                username:userData.loggedIn, 
+                username:userData.login, 
                 email:emailObj.email, 
                 password:"", 
                 location:userData.location,
                 socialOnly:true,
             });
-            console.log(user);
             req.session.loggedIn = true;
-            req.session.user = existingUser;
+            req.session.user = await User.findOne({email : emailObj.email});;
+            console.log(existingUser, "here");
             return res.redirect('/');
         }
     } else {
