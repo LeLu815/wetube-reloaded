@@ -28,9 +28,11 @@ app.use(session({
     })
 )
 
-app.use(localMiddleware)
-app.use("/", rootRouter)
-app.use("/videos", videosRouter)
-app.use("/users", userRouter)
+app.use(localMiddleware);
+app.use("/uploads", express.static("uploads"));
+app.use("/static", express.static("assets"));
+app.use("/", rootRouter);
+app.use("/videos", videosRouter);
+app.use("/users", userRouter);
 
 export default app

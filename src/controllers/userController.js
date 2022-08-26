@@ -1,4 +1,5 @@
 import User from "../models/Users";
+import Video from "../models/Video";
 import bcrypt from "bcrypt";
 import fetch from "node-fetch";
 
@@ -41,155 +42,86 @@ export const postJoin = async (req, res) => {
     }
 }
 export const getEdit = (req, res) => {
-    return res.render("edit-profile", {pageTitle : "Edit Profile", isOverlapEmail : false, isOverlapUsername : false});
+    return res.render("edit-profile", {pageTitle : "Edit Profile"});
 }
+
+// avatarUrl 이 없는 경우 비구조할당의 범위 밖이므로 오류없이 undefined가 할당된다.
 export const postEdit = async (req, res) => {
     const {
-        session : {user: {_id }},
-        body: { name, email, username, location,}
+      session: {
+        user: { _id, avatarUrl },
+      },
+      body: { name, email, username, location },
+      file,
     } = req;
-    // console.log(req.session.user)
-    /* 
-    세션과 백엔드는 우선 같다고 가정한다
-    세션으로 찾기가 어려우니까 세션에서 받은 아이디를 통해서 백엔드에서 값을 가져와야 한다. 
-    1. 세션의 값과 바디의 값을 비교해서 저장할지 안할지 결정한다
-    2. 저장결정이 나면 유니크한 값들만 중복되는지 확인한다
-    3. 중복이 되지 않으면 저장을 완료한다.
-    */
- 
-    // body 에서 받아온 값들을 리스트로 가공
-    const beforeEditBody =  Object.entries(req.body);
-    // 변경인지 아닌지. 변경이면 1, 아니면 0
-    console.log('beforeEditBody :', beforeEditBody)
-    console.log(req.session.user)
-    const whichOne = [];
-    const checkFunc = function (wantToCheck) {
-        for (let i of wantToCheck){
-            const propertyWantToGet = i[0]
-            console.log(i,propertyWantToGet,req.session.user[propertyWantToGet])
-            if (i[1] !== req.session.user[propertyWantToGet]){
-                whichOne.push([1, i[1]]);
-            }
-            else {
-                whichOne.push([0, i[1]]);
-            }
-        }
-    }
-    checkFunc(beforeEditBody);
-    console.log('whichOne', whichOne);
-    const checkList = whichOne.map((i)=>i.indexOf(1));
-    console.log('checkList', checkList)
-    if (!checkList.includes(0)) {
-        // 수정할게 없음
-        console.log("수정할게 없어요");
-        return res.redirect("/users/edit");
-    }
-    // unique 인 것들만 중복을 확인하면 됨 email, username
-    const overlapEmail = await User.exists({email:req.body.email});
-    const overlapUsername = await User.exists({username:req.body.username});
+    
 
-    // if (checkList[1] === 0 checkList[2] === 0)    
-    switch (-checkList[1] + -checkList[2]) {
-        case 0:
-            console.log("유니크가 없어요");
-            const updatedUser =  await User.findByIdAndUpdate(_id, {
-                name, email, username, location,
-            }, {new:true});
-            req.session.user = updatedUser;
-            break;
-        case 1:
-            if (checkList[1] === 0) {
-                if (!overlapEmail) {
-                    const updatedUser =  await User.findByIdAndUpdate(_id, {
-                        name, email, username, location,
-                    }, {new:true});
-                    req.session.user = updatedUser;
-                    console.log("이메일은 유니크가 아니네요?");
-                    return res.render("edit-profile", {pageTitle : "Edit Profile", isOverlapEmail : true, isOverlapUsername : false});
-                }
-                console.log("이메일은 유니크가 맞아요?");
-                return res.redirect("/users/edit", {isOverlapEmail : true});
-            } else {
-                if (!overlapUsername) {
-                    const updatedUser =  await User.findByIdAndUpdate(_id, {
-                        name, email, username, location,
-                    }, {new:true});
-                    req.session.user = updatedUser;
-                    console.log("유네네임 유니크가 아니네요?");
-                    return res.redirect("/users/edit");
-                }
-                console.log("유네네임 유니크가 맞아요?");
-                return res.render("edit-profile", {pageTitle : "Edit Profile", isOverlapEmail : false, isOverlapUsername : true});
-            }
-        case 2:
-            if (!overlapEmail && !overlapUsername) {
-                const updatedUser =  await User.findByIdAndUpdate(_id, {
-                    name, email, username, location,
-                }, {new:true});
-                req.session.user = updatedUser;
-                console.log("둘다 유니크 아니에요");
-                return res.redirect("/users/edit");
-            }
-            console.log("둘다 유니크 맞아요!!");
-            return res.render("edit-profile", {pageTitle : "Edit Profile", isOverlapEmail : true, isOverlapUsername : true});
-        default:
-            break;
-      }
-      console.log("낫띵");
-      return res.redirect("/users/edit");
-    // return res.redirect("/users/edit");
-    // const updatedUser =  await User.findByIdAndUpdate(_id, {
-    //     name, email, username, location,
-    // }, {new:true});
-    // req.session.user = updatedUser;
-    // // req.session.user = {
-    // //     ...req.session.user,
-    // //     name, email, username, location,
-    // // }; // 이거는 직접 업데이트 해주는 방식임
+    if(username !== req.session.user.username){
+        const existingUsername = await User.exists({ username });
+        if(existingUsername){
+            return res.status(400).render("edit-profile", { 
+                errorMessage: "This username is already taken."});
+        };
+    };
+    if(email !== req.session.user.email){
+        const existingEmail = await User.exists({ email });
+        if(existingEmail){
+        return res.status(400).render("edit-profile", { 
+            errorMessage: "This username is already taken."});
+        };
+    };
 
-    // return res.redirect("/users/edit");
-}
-export const remove = (req, res) => {
-    return res.send("Remove User");
+    const updatedUser = await User.findByIdAndUpdate(_id, {
+        avatarUrl: file ? file.path : avatarUrl,
+        name,
+        email,
+        username,
+        location,
+    },
+    {new: true});
+
+    req.session.user = updatedUser;
+    return res.redirect("/users/edit");
 }
 export const getLogin = (req, res) => {
-    return res.render("login", {pageTitle:"Login"});
-}
-export const postLogin = async (req, res) => {
+    res.render("login", {pageTitle: "Login"});
+ 
+};
+export const postLogin = async(req, res) => {
     const {username, password} = req.body;
-    const pageTitle = "Login"
-    // 데이터 안의 객체
-    const user = await User.findOne({username, socialOnly:false});
-    if (!user) {
-        return res
-        .status(400)
-        .render("login",{
+    const user = await User.findOne({ username, socialOnly: false });
+    const pageTitle = "Login";
+    // check if account exists
+    if(!user){
+        return res.status(400).render("login", {
             pageTitle, 
-            errorMessage:"An account with this username doesn't exists."
-        });
+            errorMessage: "An account with this username doesn't exists"});
     }
+    // check if password correct
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-        return res
-        .status(400)
-        .render("login",{
-            pageTitle, 
-            errorMessage:"Wrong password."
-        });
+    if(!ok){
+        return res.status(400).render("login", {
+            pageTitle,
+            errorMessage: "The password is not correct!"});
     }
     req.session.loggedIn = true;
     req.session.user = user;
+    //this two req.session initialize the session
     res.redirect("/");
-}
-
+};
 export const logout = (req, res) => {
     req.session.destroy();
     return res.redirect('/');
 }
-export const see = (req, res) => {
-    return res.send("See User");
+export const see = async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id).populate("videos");
+    console.log(user)
+    if (!user) {
+        return res.status(404).render("404", {pageTitle : "User not found."});
+    }
+    return res.render("users/profile", {pageTitle:`${user.name}`, user});
 }
-
 export const startGithubLogin = (req, res) => {
     const baseUrl ="https://github.com/login/oauth/authorize";
     const config = {
@@ -258,3 +190,31 @@ export const finishGithubLogin = async (req, res) => {
         return res.redirect("/login");
     }
 }
+export const getChangePassword = (req, res) => {
+    return res.render("users/change-password", { pageTitle: "Change Password" });
+}
+export const postChangePassword = async (req, res) => {
+    const {
+        session: {
+            user: {_id},
+        },
+        body: {oldPassword, newPassword, newPasswordConfirmation},
+    } = req;
+    const user = await User.findById(_id);
+    const ok = await bcrypt.compare(oldPassword, user.password);
+    if (!ok) {
+        return res.status(400).render("users/change-password", { 
+            pageTitle: "Change Password", 
+            errorMessage: "The current password is incorrect" });
+    }
+    if(newPassword !== newPasswordConfirmation) {
+        return res.status(400).render("users/change-password", { pageTitle: "Change Password", errorMessage: "The password does not match the confirmation" });
+    }
+    user.password = newPassword;
+    // console.log('Old password' ,user.password);
+    await user.save();
+    // console.log('New password', user.password);
+
+    return res.redirect("/users/logout");
+}
+
