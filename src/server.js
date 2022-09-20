@@ -9,6 +9,7 @@ import { localMiddleware } from "./middlewares";
 import rootRouter from "./routers/rootRouter";
 import videosRouter from "./routers/videoRouter"
 import userRouter from "./routers/userRouter";
+import apiRouter from "./routers/apiRouter";
 
 const app = express();
 const logger = morgan("dev");
@@ -29,10 +30,25 @@ app.use(session({
 )
 
 app.use(localMiddleware);
+
+app.use((req, res, next) => {
+    res.header("Cross-Origin-Embedder-Policy", "require-corp");
+    res.header("Cross-Origin-Opener-Policy", "same-origin");
+    next();
+});
+
 app.use("/uploads", express.static("uploads"));
 app.use("/static", express.static("assets"));
 app.use("/", rootRouter);
 app.use("/videos", videosRouter);
 app.use("/users", userRouter);
+app.use("/api", apiRouter);
+
+app.use((req, res, next) => {
+    res.header("Cross-Origin-Embedder-Policy", "require-corp");
+    res.header("Cross-Origin-Opener-Policy", "same-origin");
+    next();
+    });
+
 
 export default app

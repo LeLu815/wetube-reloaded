@@ -19,6 +19,21 @@ let controlsMovementTimeout = null;
 let volumeValue = 0.5;
 video.volume = volumeValue;
 
+// 화면 클릭시 다른 클릭 이벤트들과 곂치는 현상을 방지하기 위한 클릭방지함수
+const preventClickOverlap = (e) => {
+    e.stopPropagation();
+}
+
+const handleScreenClick = (e) => {
+    if (video.paused) {
+        video.play();
+    } else {
+        video.pause();
+    }
+    playBtnIcon.classList = video.paused ? "fas fa-play" : "fas fa-pause";   
+}
+
+
 const handlePlayClick = (e) => {
     if (video.paused) {
         video.play();
@@ -27,7 +42,6 @@ const handlePlayClick = (e) => {
     }
     playBtnIcon.classList = video.paused ? "fas fa-play" : "fas fa-pause";
 }
-
 // 기존 함수를 새로운 함수 내부에서 사용했다. 괜찮을까요?
 const handleSpaceClick = (e) => {
     if (e.keyCode === 32) {
@@ -105,15 +119,23 @@ const handleMouseLeave = () => {
     controlsTimeout = setTimeout(hideControls, 1000);
 }
 
+const handleEnded = () => {
+    const {id} = videoContainer.dataset;
+    fetch(`/api/videos/${id}/view`, {
+        method: "POST",
+    });
+}
 
 playBtn.addEventListener("click", handlePlayClick);
 muteBtn.addEventListener("click", handleMute);
 volumeRange.addEventListener("input", handleVolumeChange);
 video.addEventListener("loadeddata", handleLoadedmetadata);
 video.addEventListener("timeupdate", handleTimeUpdate);
+video.addEventListener("ended", handleEnded);
 timeline.addEventListener("input", handleTimelineChange);
 fullScreenBtn.addEventListener("click", handleFullscreen);
+videoControls.addEventListener("click", preventClickOverlap);
 videoContainer.addEventListener("mousemove", handleMouseMove);
 videoContainer.addEventListener("mouseleave", handleMouseLeave);
-videoContainer.addEventListener("click", handlePlayClick);
+videoContainer.addEventListener("click", handleScreenClick);
 document.addEventListener("keydown", handleSpaceClick);
