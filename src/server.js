@@ -3,6 +3,7 @@ import "./models/Video";
 import express from "express"
 import morgan from "morgan"
 import session from "express-session";
+import flash from 'express-flash'
 import MongoStore from "connect-mongo";
 
 import { localMiddleware } from "./middlewares";
@@ -28,6 +29,9 @@ app.use(session({
     store: MongoStore.create({ mongoUrl : process.env.DB_URL})
     })
 )
+// 세션에 연결해서 유저에게 메세지를 남기는 미들웨어
+// flash 미들웨어를 설치한 순간부터 req.flash 라는 함수를 사용할 수 있게 된다.
+app.use(flash());
 
 app.use(localMiddleware);
 
