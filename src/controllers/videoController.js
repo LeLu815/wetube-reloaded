@@ -1,5 +1,7 @@
 import Video from "../models/Video"
+import Comment from "../models/Comment"
 import Users from "../models/Users"
+import { async } from "regenerator-runtime";
 
 // const handleSearch = (error, videos) => {}
 // Video.find({}, (error, videos) => {});
@@ -17,7 +19,8 @@ export const home = async(req, res) => {
 export const watch = async (req, res) => {
     const {id} = req.params;
     // video 안의 owner가 원래 문자열 id 였다면 rel 값이 설정되어 있는 곳에서 찾아서 실제 해당 객체로 바꿔준다.
-    const video = await Video.findById(id).populate("owner");
+    const video = await Video.findById(id).populate("owner").populate('comments');
+    // console.log(video);
     if (!video){
         return res.render("404", {pageTitle : "Video not found."});
     }
@@ -56,7 +59,7 @@ export const postEdit = async (req, res) => {
         description,
         hashtags : Video.formatHashtags(hashtags),
     });
-
+    req.flash('success', 'Changes saved');
     return res.redirect(`/videos/${id}`);; 
 }
 
@@ -123,4 +126,28 @@ export const registerView = async (req, res) => {
     video.meta.views = video.meta.views + 1;
     await video.save();
     return res.sendStatus(200);
+}
+
+export const createComment = async (req, res) => {
+    const {
+        session : { user },
+        body : { text },
+        params : { id }
+    } = req;
+
+    const video = await Video.findById(id);
+    if (!video) {
+        // res.status 와 다른 점은 sendStatus 는 상태 메세지를 보내고 request 를 끝낸다
+        return res.sendStatus(404);
+    }
+    
+    const comment = await Comment.create({
+        text,
+        owner : user._id,
+        video : id,
+    });
+    // comment._id 는 몽고디비에서 자동으로 생성해주는 아이디 이다.
+    video.comments.push(comment._id);
+    video.save();
+    return res.status(201).json({newCommentId:comment._id});
 }

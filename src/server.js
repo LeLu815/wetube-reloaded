@@ -15,12 +15,14 @@ import apiRouter from "./routers/apiRouter";
 const app = express();
 const logger = morgan("dev");
 
-app.set("view engine", "pug")
-app.set("views", process.cwd() + "/src/views")
+app.set("view engine", "pug");
+app.set("views", process.cwd() + "/src/views");
 app.use(logger);
 
 // express application이 form의 value들을 이해 및 자바스크립트 형식으로 변환 가능
-app.use(express.urlencoded({extended:true}))
+app.use(express.urlencoded({extended:true}));
+// form 으로부터 받아온 string 들을 parse 하여 자바스크립트 형식으로 변환시켜주어 백엔드에서 이해할 수 있게 하는 미들웨어
+app.use(express.json());
 
 app.use(session({
     secret: process.env.COOKIE_SECRET,
