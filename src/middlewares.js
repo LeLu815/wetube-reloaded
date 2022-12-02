@@ -22,7 +22,8 @@ const s3 = new S3Client({
 
 const multerUploader = multerS3({
     s3: s3,
-    bucket: 'WetubeReloadedUploader',
+    bucket: 'wetube-leein',
+    acl: 'public-read',
 })
 
 export const localMiddleware = (req, res, next) => {

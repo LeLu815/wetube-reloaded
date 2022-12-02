@@ -70,9 +70,9 @@ export const postEdit = async (req, res) => {
             errorMessage: "This username is already taken."});
         };
     };
-
+    console.log(file);
     const updatedUser = await User.findByIdAndUpdate(_id, {
-        avatarUrl: file ? file.path : avatarUrl,
+        avatarUrl: file ? file.location : avatarUrl,
         name,
         email,
         username,
@@ -141,6 +141,7 @@ export const startGithubLogin = (req, res) => {
     return res.redirect(finalUrl);
 }
 export const finishGithubLogin = async (req, res) => {
+
     const baseUrl = "https://github.com/login/oauth/access_token";
     const config = {
         client_id : process.env.GH_CLIENT,
